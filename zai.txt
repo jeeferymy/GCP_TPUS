@@ -1,0 +1,235 @@
+
+
+Of course! Here is a comprehensive guide and Python code to fine-tune the `mesolitica/nanot5-base-malaysian-cased` model on a Google Cloud TPU.
+
+### Clarification on the Request
+
+First, an important clarification: `mesolitica/nanot5-base-malaysian-cased` is a **pre-trained model checkpoint** on the Hugging Face Hub, not a dataset. To train or fine-tune it, we need a separate dataset.
+
+For this example, I will use a relevant Malaysian dataset from the same organization: **`mesolitica/translation-en-ms`**. This dataset is for English-to-Malay translation, a perfect task for a sequence-to-sequence model like T5. You can easily swap this out for any other text-to-text dataset (e.g., summarization, question answering).
+
+---
+
+### Overview of the Process
+
+1.  **Google Cloud Setup**: We'll set up a GCP project with a TPU VM and a Cloud Storage bucket.
+2.  **Environment Setup**: We'll install the necessary libraries, including `torch-xla` for TPU support.
+3.  **Python Training Script**: We will create a single Python script (`train_t5_tpu.py`) that handles:
+    *   Loading the pre-trained model and tokenizer.
+    *   Loading and preprocessing the dataset from Hugging Face.
+    *   Configuring the `Trainer` from the Hugging Face `transformers` library for TPU training.
+    *   Launching the training process using `torch_xla`.
+4.  **Execution**: We'll run the script on the TPU VM.
+
+---
+
+### Step 1: Google Cloud & TPU Setup
+
+1.  **Create a GCP Project**: If you don't have one, create a new project in the [Google Cloud Console](https://console.cloud.google.com/).
+2.  **Enable APIs**: Make sure the **Cloud TPU API** and **Cloud Storage API** are enabled for your project.
+3.  **Create a Cloud Storage Bucket**: TPU training works best when saving checkpoints and logs to a GCS bucket.
+    *   Go to Cloud Storage in the GCP Console.
+    *   Click "Create Bucket".
+    *   Give it a unique name (e.g., `my-tpu-training-bucket-12345`).
+    *   Choose a region (make sure it's the same region where you'll create your TPU).
+    *   Leave the other settings as default and create it.
+4.  **Create a TPU VM**: We'll use a TPU VM with `torch-xla` pre-installed, which simplifies setup.
+    *   Go to Cloud TPU in the GCP Console.
+    *   Click "Create TPU".
+    *   **TPU type**: Select `TPU v2` (or v3) and `8 cores` (a common and cost-effective starting point).
+    *   **TPU software version**: Select a `v2-alpha` or `nightly` build that includes PyTorch/XLA (e.g., `tpu-vm-v4-base`). *Note: As of late 2023/early 2024, the default TPU VM images often come with PyTorch/XLA pre-installed. If not, you may need to install it manually, but the script below will handle that.*
+    *   **Network**: Keep the default.
+    *   Click "Create". It will take a few minutes to provision.
+
+5.  **SSH into the TPU VM**:
+    *   Once the TPU is running, click on its name and then click the "SSH" button. This will open a terminal window directly into your TPU VM.
+
+---
+
+### Step 2: Environment Setup on the TPU VM
+
+Once you are SSH'd into the TPU VM, run the following commands to install the required libraries. The `torch-xla` library is the key to making PyTorch work with TPUs.
+
+```bash
+# Update pip
+pip install --upgrade pip
+
+# Install core libraries
+pip install transformers[torch] datasets cloud-tpu-client
+
+# Install the specific version of torch-xla compatible with your TPU runtime
+# This command fetches the correct version for the current TPU environment
+pip install torch-xla[tpu] -f https://storage.googleapis.com/tpu-pytorch/wheels/tpuvm/torch_xla-2.1-cp310-cp310-linux_x86_64.whl
+```
+*Note: The `cp310` part refers to Python 3.10. Check your Python version with `python --version` and adjust the wheel filename if necessary (e.g., `cp39` for Python 3.9). The TPU VM base images usually use Python 3.10.*
+
+---
+
+### Step 3: The Python Training Script (`train_t5_tpu.py`)
+
+Create a file named `train_t5_tpu.py` on your TPU VM (e.g., using `nano train_t5_tpu.py`) and paste the following code into it. I've added detailed comments to explain each part.
+
+```python
+import os
+import torch
+from datasets import load_dataset
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSeq2SeqLM,
+    DataCollatorForSeq2Seq,
+    TrainingArguments,
+    Trainer,
+    set_seed,
+)
+import torch_xla.core.xla_model as xm
+import torch_xla.distributed.xla_multiprocessing as xmp
+
+# --- 1. Configuration ---
+# Use a wrapper function for the main training logic. This is required for xmp.spawn.
+def train_t5_on_tpu():
+    """
+    Main function to set up and run the training process on a TPU core.
+    """
+    # Set seed for reproducibility
+    set_seed(42)
+
+    # Model and dataset names
+    MODEL_CHECKPOINT = "mesolitica/nanot5-base-malaysian-cased"
+    DATASET_NAME = "mesolitica/translation-en-ms"
+    
+    # Your GCS bucket for storing results
+    # Replace with your actual bucket name
+    GCS_BUCKET = "gs://my-tpu-training-bucket-12345" 
+    OUTPUT_DIR = os.path.join(GCS_BUCKET, "nanot5-malay-translation-finetuned")
+
+    # Training hyperparameters
+    BATCH_SIZE = 16  # Per TPU core
+    LEARNING_RATE = 5e-5
+    NUM_EPOCHS = 3
+    LOGGING_STEPS = 50
+    SAVE_STEPS = 1000
+    SOURCE_LANG = "en"
+    TARGET_LANG = "ms"
+
+    # --- 2. Load Model and Tokenizer ---
+    # The model is loaded on the correct TPU device by the Trainer automatically.
+    # We just need to load the model and tokenizer objects.
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_CHECKPOINT)
+    model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_CHECKPOINT)
+
+    # --- 3. Load and Preprocess Dataset ---
+    print("Loading dataset...")
+    raw_datasets = load_dataset(DATASET_NAME)
+
+    # T5 models often benefit from adding a task-specific prefix.
+    # For translation, a common format is "translate Source to Target: ..."
+    prefix = f"translate {SOURCE_LANG} to {TARGET_LANG}: "
+
+    def preprocess_function(examples):
+        """Tokenize the source and target texts."""
+        inputs = [prefix + ex for ex in examples["en"]]
+        targets = examples["ms"]
+        model_inputs = tokenizer(inputs, max_length=128, truncation=True)
+
+        # Setup the tokenizer for targets
+        with tokenizer.as_target_tokenizer():
+            labels = tokenizer(targets, max_length=128, truncation=True)
+
+        model_inputs["labels"] = labels["input_ids"]
+        return model_inputs
+
+    print("Preprocessing dataset...")
+    # Apply the preprocessing to the entire dataset
+    tokenized_datasets = raw_datasets.map(preprocess_function, batched=True)
+    
+    # Select a smaller subset for quick demonstration. Remove this for full training.
+    # tokenized_datasets["train"] = tokenized_datasets["train"].shuffle(seed=42).select(range(1000))
+
+    # --- 4. Set up the Trainer ---
+    # The DataCollator will dynamically pad the sentences to the longest length in a batch.
+    data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
+
+    # Get the number of TPU cores
+    tpu_cores = xm.xrt_world_size()
+    print(f"Running on {tpu_cores} TPU cores.")
+
+    training_args = TrainingArguments(
+        output_dir=OUTPUT_DIR,
+        overwrite_output_dir=True,
+        
+        # TPU specific arguments
+        tpu_num_cores=tpu_cores,
+
+        # Training hyperparameters
+        per_device_train_batch_size=BATCH_SIZE,
+        learning_rate=LEARNING_RATE,
+        num_train_epochs=NUM_EPOCHS,
+        weight_decay=0.01,
+        
+        # Logging and saving
+        logging_steps=LOGGING_STEPS,
+        save_steps=SAVE_STEPS,
+        save_total_limit=2,
+        
+        # Evaluation
+        # evaluation_strategy="epoch", # Uncomment if you have a validation set
+        
+        # Report to none to avoid extra dependencies. Can be "tensorboard", "wandb" etc.
+        report_to="none", 
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=tokenized_datasets["train"],
+        # eval_dataset=tokenized_datasets["validation"], # Uncomment if you have a validation set
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+    )
+
+    # --- 5. Start Training ---
+    print("Starting training...")
+    trainer.train()
+    
+    # --- 6. Save the Final Model ---
+    print("Saving final model to GCS...")
+    # The trainer.save_model() handles saving on the master process.
+    # It will save to the GCS bucket specified in OUTPUT_DIR.
+    trainer.save_model(OUTPUT_DIR)
+    tokenizer.save_pretrained(OUTPUT_DIR)
+    print("Training complete!")
+
+
+# --- 7. Main Execution Block ---
+# This is the entry point for the script.
+if __name__ == "__main__":
+    # xmp.spawn launches the training function on each available TPU core.
+    # 'nprocs' should be the number of TPU cores (8 for a v2-8 or v3-8).
+    # 'args' are passed to the training function.
+    xmp.spawn(train_t5_on_tpu, args=(), nprocs=8)
+```
+
+### Key Concepts in the Script
+
+*   **`xmp.spawn`**: This is the magic function from `torch_xla` that handles the distributed nature of TPU training. It takes your main training function (`train_t5_on_tpu`) and runs it on all 8 TPU cores in parallel.
+*   **`TrainingArguments`**: The Hugging Face `Trainer` is TPU-aware. By setting `tpu_num_cores`, it automatically handles distributing the data and model across the cores.
+*   **`AutoModelForSeq2SeqLM`**: We use this class because T5 is a sequence-to-sequence model, suitable for tasks like translation.
+*   **`DataCollatorForSeq2Seq`**: This is a highly efficient data collator that pads both the inputs and the labels dynamically within each batch, which is crucial for performance.
+*   **GCS Bucket (`gs://...`)**: The `output_dir` is a Google Cloud Storage path. The `Trainer` and `tokenizer` can save directly to GCS, which is the recommended practice as the local TPU VM storage is ephemeral.
+
+---
+
+### Step 4: Run the Training Script
+
+1.  Make sure you are in the SSH terminal of your TPU VM.
+2.  Ensure the `train_t5_tpu.py` file is in your current directory.
+3.  **Replace the placeholder GCS bucket name** in the script with your actual bucket name.
+4.  Run the script:
+
+    ```bash
+    python train_t5_tpu.py
+    ```
+
+You will see output as the script starts, loads the data, and begins the training loop. The `Trainer` will print the loss at intervals defined by `LOGGING_STEPS`. Checkpoints will be saved to your GCS bucket at intervals defined by `SAVE_STEPS`.
+
+After training, the final fine-tuned model and tokenizer will be available in your GCS bucket under the `nanot5-malay-translation-finetuned` directory. You can then load this model from the hub or directly from GCS for inference.
