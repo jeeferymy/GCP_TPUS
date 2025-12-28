@@ -99,7 +99,7 @@ def train_t5_on_tpu():
     
     # Your GCS bucket for storing results
     # Replace with your actual bucket name
-    GCS_BUCKET = "gs://my-tpu-training-bucket-12345" 
+    GCS_BUCKET = "gs://ejen-sayang-training-bucket-01" 
     OUTPUT_DIR = os.path.join(GCS_BUCKET, "nanot5-malay-translation-finetuned")
 
     # Training hyperparameters
