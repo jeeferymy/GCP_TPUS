@@ -1,0 +1,11 @@
+# Set your GCP project id.
+export PROJECT_ID=<project-id>
+# Modify Zone as applicable
+export ZONE=us-central2-b
+
+
+gcloud alpha compute tpus tpu-vm create profiler-tutorial-tpu-vm \
+ --project=${PROJECT_ID} \
+ --zone=${ZONE} \
+ --version=v2-alpha \
+ --accelerator-type=v3-8
