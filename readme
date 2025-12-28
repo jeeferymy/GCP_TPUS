@@ -9,3 +9,9 @@ gcloud alpha compute tpus tpu-vm create profiler-tutorial-tpu-vm \
  --zone=${ZONE} \
  --version=v2-alpha \
  --accelerator-type=v3-8
+
+gcloud alpha compute tpus tpu-vm create profiler-tutorial-tpu-vm \
+ --project=563809042311 \
+ --zone=us-central2-b \
+ --version=tpu-ubuntu2204-base \
+ --accelerator-type=v4-32
