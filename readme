@@ -5,6 +5,11 @@ export ZONE=us-central2-b
 
 gcloud compute tpus tpu-vm create nanot5-tpu-vm --zone=us-central2-b --version=tpu-ubuntu2204-base --accelerator-type=v4-32
 
+gcloud compute tpus tpu-vm create nanot5-tpu-vm --zone=us-central1-a --version=tpu-ubuntu2204-base --accelerator-type=v4-32
+
+gcloud compute tpus tpu-vm create nanot5-tpu-vm --zone=europe-west4-a --version=tpu-ubuntu2204-base --accelerator-type=v6e-64
+
+
 gcloud compute tpus tpu-vm scp --zone=us-central2-b ./nano_t5_config.py ./train_nano_t5_tpu.py nanot5-tpu-vm:~
 
 gcloud compute tpus tpu-vm ssh nanot5-tpu-vm --zone=us-central2-b
