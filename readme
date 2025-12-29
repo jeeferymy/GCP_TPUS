@@ -24,3 +24,14 @@ export GOOGLE_CLOUD_PROJECT=your-project-id
 python3 train_nano_t5_tpu.py
 
 gcloud compute tpus tpu-vm ssh nanot5-tpu-vm --project 563809042311 --zone us-central2-b --ssh-flag="-4 -L 9009:localhost:9009"
+
+
+Delete all data 
+
+Run pip freeze > pip.txt to write all of the installed libraries to a file.
+
+Open the file and remove setuptools and wheel from the it.
+
+Run pip uninstall -r pip.txt -y.
+
+Delete the pip.txt file.
