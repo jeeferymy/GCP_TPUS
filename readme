@@ -29,8 +29,9 @@ gcloud compute tpus tpu-vm ssh nanot5-tpu-vm --project 563809042311 --zone us-ce
 Delete all data 
 
 Run pip freeze > pip.txt to write all of the installed libraries to a file.
-
 Open the file and remove setuptools and wheel from the it.
+Run pip uninstall -r pip.txt -y.
+Delete the pip.txt file.
 
 SSH 
 
@@ -47,6 +48,6 @@ pip install ipywidgets widgetsnbextension
 cd optimum-tpu/examples/language-modeling
 jupyter notebook --port 8888
 
-Run pip uninstall -r pip.txt -y.
+pip install "jax[tpu]" -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
+pip install flax optax datasets transformers tensorflow
 
-Delete the pip.txt file.
