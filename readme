@@ -32,6 +32,21 @@ Run pip freeze > pip.txt to write all of the installed libraries to a file.
 
 Open the file and remove setuptools and wheel from the it.
 
+SSH 
+
+gcloud compute tpus tpu-vm ssh ew4b-v5e1 --zone=europe-west4-b -- -L 8888:localhost:8888
+
+pip install -e . -f https://storage.googleapis.com/libtpu-releases/index.html
+# Install TRL and PEFT for training (see later how they are used)
+pip install trl peft
+# Install Jupyter notebook
+pip install -U jupyterlab notebook
+# Optionally, install widgets extensions for better rendering
+pip install ipywidgets widgetsnbextension
+# Change directory and launch Jupyter notebook
+cd optimum-tpu/examples/language-modeling
+jupyter notebook --port 8888
+
 Run pip uninstall -r pip.txt -y.
 
 Delete the pip.txt file.
