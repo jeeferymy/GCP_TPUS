@@ -1,0 +1,143 @@
+1  python -v
+    2  sudo apt install python3.11.9
+    3  sudo add-apt-repository ppa:deadsnakes/ppa
+    4  df
+    5  sudo apt update
+    6  sudo apt install python3.11.9
+    7  sudo apt install python3.11
+    8  apt list --upgradable
+    9  sudo apt install python3
+   10  sudo apt install python3.11
+   11  sudo apt install python-3.11
+   12  curl https://pyenv.run | bash
+   13  pyenv versions
+   14  pyenv install "3.11.9"
+   15  source .profile
+   16  pyenv versions
+   17  .pyenv/bin/pyenv versions
+   18  .pyenv/bin/pyenv install "3.11.9"
+   19  python3 -version
+   20  python -version
+   21  python -v
+   22  ls
+   23  vi .profile 
+   24  source .profile
+   25  ls
+   26  python3 -v
+   27  cd .pyenv/bin/
+   28  ls
+   29  cd pyenv
+   30  ls
+   31  cd
+   32  more .profile 
+   33  cd .pyenv/versions/
+   34  ls
+   35  pip install bz2
+   36  pip install bzip2
+   37  pip install bz2
+   38  sudo apt install bz2
+   39  sudo apt install bunzip2
+   40  sudo apt install bzip2
+   41  pip install bzip2
+   42  .pyenv/bin/pyenv install "bzip2"
+   43  .pyenv/bin/pyenv install "bz2"
+   44  pyenv install "bz2"
+   45  cd
+   46  .pyenv/bin/pyenv install "bzip2"
+   47  .pyenv/bin/pyenv install "bz2"
+   48  .pyenv/bin/pyenv install "bunzip2"
+   49  .pyenv/bin/pyenv install bz2
+   50  sudo apt-get install -y libbz2-dev
+   51  .pyenv/bin/pyenv install "3.11.9"
+   52  sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libgdbm-dev libdb5.3-dev libbz2-dev libexpat1-dev liblzma-dev tk-dev libffi-dev
+   53  .pyenv/bin/pyenv install "3.11.9"
+   54  python3 -v
+   55  ls
+   56  cd .pyenv/versions/3.11.9/
+   57  ls
+   58  cd bin/
+   59  ls
+   60  ./python3 -v
+   61  cd
+   62  git clone https://github.com/marin-community/marin.git
+   63  cd
+   64  source .profile 
+   65  ls
+   66  cd marin/
+   67  uv venv --python 3.11
+   68  pip3 install uv
+   69  pip3 install --upgrade pip
+   70  uv venv --python 3.11
+   71* 
+   72  ls
+   73  uv sync --all-packages
+   74  uv sync --all-packages --extra=tpu
+   75  wandb offline
+   76  uv run experiments/tutorials/train_tiny_model_cpu.py --prefix local_store
+   77  hf auth login
+   78  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store
+   79  wandb login
+   80  wandb login --relogin
+   81  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store
+   82  cd experiments/
+   83  ls
+   84  cd tutorials/
+   85  ls
+   86  more train_tiny_model_tpu.py 
+   87  cd ..
+   88  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store
+   89  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+   90  export WANDB_API_KEY=c2ae74e31f67d021356c7b28eddb7936eb1269d1
+   91  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+   92  ls
+   93  cd local_store/
+   94  ls
+   95  cd checkpoints/
+   96  ;s
+   97  ls
+   98  cd ..
+   99  cd experiments/
+  100  ls
+  101  cd ..
+  102  cd tokenized/
+  103  ;s
+  104  ls
+  105  cd roneneldan/
+  106  ls
+  107  cd ..
+  108  cd .
+  109  cd ..
+  110  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+  111  rm -rf checkpoints/marin-tinystories-30m
+  112  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+  113  rm -rf checkpoints/marin-tinystories-30m
+  114  vi experiments/tutorials/train_tiny_model_tpu.py 
+  115  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+  116  vi experiments/tutorials/train_tiny_model_tpu.py 
+  117  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+  118  rm -rf checkpoints/marin-tinystories-30m
+  119  uv run experiments/tutorials/train_tiny_model_tpu.py --prefix local_store --force_run_failed true
+  120  ls
+  121  cd local_store/
+  122  ls
+  123  cd checkpoints/
+  124  ls
+  125  cd marin-tinystories-nano-a91fb1/
+  126  ls
+  127  cd hf/
+  128  ls
+  129  cd step-999/
+  130  ls
+  131  ls -l
+  132  df
+  133  more tokenizer_config.json 
+  134  ls
+  135  ls -l
+  136  more config.json 
+  137  ls
+  138  more chat_template.jinja 
+  139  ls
+  140  cd
+  141  pip install vllm
+  142  uv pip install vllm-tpu
+  143  history
